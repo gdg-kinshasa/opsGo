@@ -25,7 +25,7 @@ import (
 	"net/http"
 )
 
-const port string = ":8081"
+const port string = ":8484"
 
 func main() {
 	http.HandleFunc("/blue", blueHandler)
