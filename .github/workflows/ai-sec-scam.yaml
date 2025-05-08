@@ -1,0 +1,46 @@
+name: AI-Powered Docker Security Scan
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types: [opened, synchronize]
+
+jobs:
+  ai-sec-docker-scan:
+    name: Scan Docker Image and Generate AI Suggestions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      - name: Build Docker image
+        run: docker build -t opsgo-ai-scan:latest -f Dockerfile .
+
+      - name: Run Trivy scan on Docker image
+        uses: aquasecurity/trivy-action@0.13.0
+        with:
+          scan-type: 'image'
+          image-ref: 'opsgo-ai-scan:latest'
+          format: 'json'
+          output: 'trivy-results.json'
+
+      - name: Analyze results with Gemini
+        run: python .github/scripts/send_to_gemini.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Post AI suggestions to PR
+        run: python .github/scripts/comment_on_pr.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
