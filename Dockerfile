@@ -14,15 +14,26 @@
 #
 # Modified by Patrick Bashizi in March 2025 for educational purposes
 
-FROM golang:1.19.2 as builder
-WORKDIR /app
-RUN go mod init opsgo
-COPY *.go ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o /opsgo
+FROM debian:11.10
 
-FROM gcr.io/distroless/base-debian11
-WORKDIR /
-COPY --from=builder /opsgo /opsgo
-ENV PORT 8080
+# Update package lists and install necessary dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libc6=2.31-13+deb11u12 \
+    libssl1.1=1.1.1w-0+deb11u2 \
+    openssl=1.1.1w-0+deb11u2 \
+    tzdata=2025b-0+deb11u1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy application files
+COPY /opsgo /opsgo
+
+# Set environment variables
+ENV PORT=8080
+
+# Create a non-root user
+RUN groupadd -r nonroot && useradd -r -g nonroot nonroot
 USER nonroot:nonroot
+
+# Command to run the application
 CMD ["/opsgo"]
