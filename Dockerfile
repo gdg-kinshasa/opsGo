@@ -14,7 +14,7 @@
 #
 # Modified by Patrick Bashizi in March 2025 for educational purposes
 
-FROM golang:1.24.3 as builder
+FROM golang:1.19.2 as builder
 WORKDIR /app
 RUN go mod init opsgo
 COPY *.go ./
